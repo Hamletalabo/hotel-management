@@ -24,20 +24,26 @@ import java.util.Set;
 public class User extends BaseEntity implements UserDetails {
 
     private String email;
+
     private String name;
+
     private String phoneNumber;
-    private List<Booking> bookings;
+
     private String password;
+
     private String confirmPassword;
 
     private String resetToken;
+
     private LocalDateTime TokenCreationDate;
 
     private boolean enabled;
 
-
     @Enumerated(value = EnumType.STRING)
     private Roles roles;
+
+    @OneToMany(mappedBy = "user", fetch =FetchType.LAZY, cascade = CascadeType.ALL)
+    private List<Booking> bookings;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
     @JsonIgnoreProperties("user")
