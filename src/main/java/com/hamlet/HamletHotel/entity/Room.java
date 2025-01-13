@@ -1,7 +1,6 @@
 package com.hamlet.HamletHotel.entity;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.*;
 
 import java.math.BigDecimal;
@@ -20,5 +19,7 @@ public class Room extends BaseEntity{
     private BigDecimal roomPrice;
     private String roomPhotoUrl;
     private String roomDescription;
+
+    @OneToMany(mappedBy = "room", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private List<Booking> bookings;
 }
