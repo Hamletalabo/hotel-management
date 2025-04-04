@@ -12,4 +12,9 @@ public class GlobalException {
     public ResponseEntity<Object> handleNotFoundException(NotFoundException e) {
         return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
     }
+
+    @ExceptionHandler(UnableToUploadImageException.class)
+    public ResponseEntity<Object> handleUnableToUploadImageException(UnableToUploadImageException e){
+        return new ResponseEntity<>(e.getMessage(),HttpStatus.BAD_REQUEST);
+    }
 }
