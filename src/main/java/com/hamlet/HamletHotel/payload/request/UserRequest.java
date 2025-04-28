@@ -1,7 +1,7 @@
 package com.hamlet.HamletHotel.payload.request;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.hamlet.HamletHotel.entity.Booking;
+import com.hamlet.HamletHotel.enums.Roles;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -14,10 +14,12 @@ import java.util.List;
 @NoArgsConstructor
 @Builder
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class UserRegistrationRequest {
+public class UserRequest {
+
+    private Long id;
     private String email;
     private String name;
     private String phoneNumber;
-    private String role;
+    private Roles role;
     private List<BookingRequest> bookings;
 }
