@@ -1,5 +1,6 @@
 package com.hamlet.HamletHotel.entity;
 
+import com.hamlet.HamletHotel.enums.TokenType;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -15,8 +16,6 @@ public class JwtToken extends BaseEntity {
     @Column(unique = true)
     public String token;
 
-    public String tokenType = "BEARER";
-
     public boolean revoked;
 
     public boolean expired;
@@ -24,4 +23,7 @@ public class JwtToken extends BaseEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     public User user;
+
+    @Enumerated(EnumType.STRING)
+    private TokenType tokenType = TokenType.BEARER;
 }

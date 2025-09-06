@@ -9,8 +9,13 @@ import java.util.Optional;
 
 public interface JwtTokenRepository extends JpaRepository<JwtToken, Long> {
 
-    @Query("SELECT jt FROM JwtToken jt WHERE jt.user.id = :userId")
-    List<JwtToken> findAllValidTokenByUser(Long userId);
+
+    @Query(value = """
+      select t from JwtToken t inner join User u\s
+      on t.user.id = u.id\s
+      where u.id = :id and (t.expired = false or t.revoked = false)\s
+      """)
+    List<JwtToken> findAllValidTokenByUser(Long id);
 
     Optional<JwtToken> findByToken(String token);
 }

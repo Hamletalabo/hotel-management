@@ -15,44 +15,56 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.InputStream;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
 public class AwsS3ServiceImpl implements AwsS3Service {
 
-    private final String bucketName = "hamlet-hotel-images";
+    @Value("${bucket-name}")
+    private String bucketName;
 
     @Value("${aws.s3.access.key}")
-    private String awsS3Accesskey;
+    private String awsS3AccessKey;
 
     @Value("${aws.s3.secret.key}")
-    private String awsS3Secretkey;
+    private String awsS3SecretKey;
+
+    // Optionally, make region configurable from application.properties
+    @Value("${aws.s3.region:eu-north-1}") // default if not set
+    private String awsS3Region;
 
     @Override
     public String saveImageToS3(MultipartFile photo) {
-
-        String s3LocationImage = null;
         try {
-            String s3Filename = photo.getOriginalFilename();
+            String originalName = photo.getOriginalFilename();
+            String extension = originalName.substring(originalName.lastIndexOf("."));
+            String uniqueName = UUID.randomUUID() + extension;
 
-            BasicAWSCredentials awsCredentials = new BasicAWSCredentials(awsS3Accesskey, awsS3Secretkey);
+            // Create AWS credentials
+            BasicAWSCredentials awsCredentials = new BasicAWSCredentials(awsS3AccessKey, awsS3SecretKey);
+
+            // Build S3 client
             AmazonS3 s3Client = AmazonS3ClientBuilder.standard()
                     .withCredentials(new AWSStaticCredentialsProvider(awsCredentials))
-                    .withRegion(Regions.EU_NORTH_1)
+                    .withRegion(Regions.fromName(awsS3Region))
                     .build();
 
-            InputStream inputStream = photo.getInputStream();
-
+            // Prepare metadata
             ObjectMetadata metadata = new ObjectMetadata();
-            metadata.setContentType("image/jpeg");
+            metadata.setContentType(photo.getContentType());
 
-            PutObjectRequest putObjectRequest = new PutObjectRequest(bucketName, s3Filename, inputStream,metadata);
-            s3Client.putObject(putObjectRequest);
-            return "https://" + bucketName + ".s3.amazon.com/"+s3Filename;
+            // Upload to S3
+            try (InputStream inputStream = photo.getInputStream()) {
+                PutObjectRequest putObjectRequest = new PutObjectRequest(bucketName, uniqueName, inputStream, metadata);
+                s3Client.putObject(putObjectRequest);
+            }
+
+            // Return S3 file URL
+            return "https://" + bucketName + ".s3." + awsS3Region + ".amazonaws.com/" + uniqueName;
 
         } catch (Exception e) {
-            e.printStackTrace();
-            throw new UnableToUploadImageException("unable to upload image to s3 bucket" + e.getMessage());
+            throw new UnableToUploadImageException("Unable to upload image to S3 bucket: " + e.getMessage());
         }
     }
 }
