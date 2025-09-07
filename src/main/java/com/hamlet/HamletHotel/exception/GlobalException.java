@@ -22,4 +22,24 @@ public class GlobalException {
     public ResponseEntity<Object> handleAlreadyExistException(AlreadyExistsException e) {
         return new ResponseEntity<>(e.getMessage(), HttpStatus.CONFLICT);
     }
+
+    @ExceptionHandler(UnauthenticatedException.class)
+    public ResponseEntity<Object> handleUnauthenticatedException(UnauthenticatedException e) {
+        return new ResponseEntity<>(e.getMessage(), HttpStatus.UNAUTHORIZED);
+    }
+
+    @ExceptionHandler(UnableToDeleteException.class)
+    public ResponseEntity<Object> handleUnableToDeleteException(UnableToDeleteException e){
+        return new ResponseEntity<>(e.getMessage(),HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(InvalidInputException.class)
+    public ResponseEntity<Object> handleInvalidInputException(InvalidInputException e) {
+        return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+    }
+
+    public ResponseEntity<Object> handleBadRequestException(BadRequestException e){
+        return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+    }
+
 }

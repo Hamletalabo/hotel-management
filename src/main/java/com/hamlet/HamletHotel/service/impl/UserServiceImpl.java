@@ -19,7 +19,6 @@ import com.hamlet.HamletHotel.utils.Utils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -29,39 +28,33 @@ import java.util.List;
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
 
-    private UserRepository userRepository;
-    private PasswordEncoder passwordEncoder;
-    private JwtService jwtService;
-    private AuthenticationManager authenticationManager;
-    private JwtTokenRepository jwtTokenRepository;
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final JwtService jwtService;
+    private final AuthenticationManager authenticationManager;
+    private final JwtTokenRepository jwtTokenRepository;
 
     @Override
     public UserRegisterResponse register(User user) {
-
-        UserRegisterResponse response = new UserRegisterResponse();
-        try {
-            if (user.getRoles() == null ){
-                user.setRoles(Roles.USER);
-            }
-            if (userRepository.existsByEmail(user.getEmail())){
-                throw new AlreadyExistsException(user.getEmail() + "Already exists");
-            }
-            user.setPassword(passwordEncoder.encode(user.getPassword()));
-
-            User savedUser = userRepository.save(user);
-            UserRequest userRequest = Utils.mapUserEntityToUserRequest(savedUser);
-            response.setUser(userRequest);
-            response.setResponse(ApiResponse.builder()
-                            .responseCode("200")
-                    .build());
-
-        } catch (AlreadyExistsException e) {
-            response.setResponse(ApiResponse.builder()
-                            .responseCode("400")
-                            .responseMessage("User already exists")
-                    .build());
+        if (user.getRoles() == null) {
+            user.setRoles(Roles.USER);
         }
-        return response;
+
+        if (userRepository.existsByEmail(user.getEmail())) {
+            throw new AlreadyExistsException(user.getEmail() + " already exists");
+        }
+
+        user.setPassword(passwordEncoder.encode(user.getPassword()));
+
+        User savedUser = userRepository.save(user);
+
+        return UserRegisterResponse.builder()
+                .user(Utils.mapUserEntityToUserRequest(savedUser))
+                .response(ApiResponse.builder()
+                        .responseCode("200")
+                        .responseMessage("User registered successfully")
+                        .build())
+                .build();
     }
 
     @Override
@@ -72,40 +65,86 @@ public class UserServiceImpl implements UserService {
                         loginRequest.getPassword()
                 )
         );
-        User person = userRepository.findByEmail(loginRequest.getEmail())
-                .orElseThrow(()-> new NotFoundException("User is not found"));
 
-        var jwtToken = jwtService.generateToken(person);
-        revokeAllUserTokens(person);
-        saveUserToken(person, jwtToken);
+        User user = userRepository.findByEmail(loginRequest.getEmail())
+                .orElseThrow(() -> new NotFoundException("User not found"));
 
+        String jwtToken = jwtService.generateToken(user);
+        revokeAllUserTokens(user);
+        saveUserToken(user, jwtToken);
 
         return LoginResponse.builder()
-                .responseCode("002")
-                .responseMessage("Your have been logged in successfully")
+                .responseCode("200")
+                .responseMessage("You have been logged in successfully")
                 .token(jwtToken)
                 .build();
     }
 
     @Override
     public ApiResponse getAllUsers() {
-        ApiResponse response = new ApiResponse();
-        try {
-            List<User> userList = userRepository.findAll();
-            List<UserRequest> userRequests = Utils.mapUserListEntityToUserListRequest(userList);
-            response.setResponseCode("200");
-            response.setResponseMessage("successful");
-            response.setUserLists(userRequests);
+        List<User> userList = userRepository.findAll();
+        List<UserRequest> userRequests = Utils.mapUserListEntityToUserListRequest(userList);
 
-        } catch (Exception e) {
-            response.setResponseCode("500");
-            response.setResponseMessage("Failed to retrieve users: " + e.getMessage());
-        }
-        return response;
+        return ApiResponse.builder()
+                .responseCode("200")
+                .responseMessage("Successfully retrieved users")
+                .userLists(userRequests)
+                .build();
     }
 
-    private void saveUserToken(User user, String jwtToken){
-        var token = JwtToken.builder()
+    @Override
+    public ApiResponse getUserBookingsHistory(String userId) {
+        User user = userRepository.findById(Long.valueOf(userId))
+                .orElseThrow(() -> new NotFoundException("User not found"));
+
+        UserRequest userRequest = Utils.mapUserEntityToUserRequestPlusUserBookingsAndRoom(user);
+
+        return ApiResponse.builder()
+                .responseCode("200")
+                .responseMessage("Successfully retrieved user booking history")
+                .user(userRequest)
+                .build();
+    }
+
+    @Override
+    public ApiResponse deleteUser(String userId) {
+        User user = userRepository.findById(Long.valueOf(userId))
+                .orElseThrow(() -> new NotFoundException("User not found"));
+
+        userRepository.delete(user);
+
+        return ApiResponse.builder()
+                .responseCode("200")
+                .responseMessage("User deleted successfully")
+                .build();
+    }
+
+    @Override
+    public ApiResponse getUserById(String userId) {
+        User user = userRepository.findById(Long.valueOf(userId))
+                .orElseThrow(() -> new NotFoundException("User not found"));
+
+        return ApiResponse.builder()
+                .responseCode("200")
+                .responseMessage("Successfully retrieved user")
+                .user(Utils.mapUserEntityToUserRequest(user))
+                .build();
+    }
+
+    @Override
+    public ApiResponse getUserInfo(String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new NotFoundException("User not found"));
+
+        return ApiResponse.builder()
+                .responseCode("200")
+                .responseMessage("Successfully retrieved user information")
+                .user(Utils.mapUserEntityToUserRequest(user))
+                .build();
+    }
+
+    private void saveUserToken(User user, String jwtToken) {
+        JwtToken token = JwtToken.builder()
                 .user(user)
                 .token(jwtToken)
                 .tokenType(TokenType.BEARER)
@@ -114,101 +153,16 @@ public class UserServiceImpl implements UserService {
                 .build();
         jwtTokenRepository.save(token);
     }
-    private void revokeAllUserTokens(User user){
+
+    private void revokeAllUserTokens(User user) {
         var validUserTokens = jwtTokenRepository.findAllValidTokenByUser(user.getId());
-        if (validUserTokens.isEmpty())
-            return;
+        if (validUserTokens.isEmpty()) return;
+
         validUserTokens.forEach(token -> {
             token.setExpired(true);
             token.setRevoked(true);
         });
+
         jwtTokenRepository.saveAll(validUserTokens);
-    }
-
-
-    @Override
-    public ApiResponse getUserBookingsHistory(String userId) {
-
-        ApiResponse response = new ApiResponse();
-        try {
-            User user = userRepository.findById(Long.valueOf(userId)).orElseThrow(()-> new  NotFoundException(
-                    "User not found"
-            ));
-            UserRequest userRequest = Utils.mapUserEntityToUserRequestPlusUserBookingsAndRoom(user);
-            response.setResponseCode("200");
-            response.setResponseMessage("successful");
-            response.setUser(userRequest);
-
-
-        }  catch (Exception e) {
-            response.setResponseCode("404");
-            response.setResponseMessage("Error retrieving all users: " + e.getMessage());
-        }
-        return response;
-    }
-
-    @Override
-    public ApiResponse deleteUser(String userId) {
-
-        ApiResponse response = new ApiResponse();
-        try {
-
-            userRepository.findById(Long.valueOf(userId)).orElseThrow(()-> new  NotFoundException(
-                    "User not found"
-            ));
-            userRepository.deleteById(Long.valueOf(userId));
-            response.setResponseCode("200");
-            response.setResponseMessage("User deleted successfully");
-
-
-        }  catch (Exception e) {
-            response.setResponseCode("404");
-            response.setResponseMessage("Error deleting a users: " + e.getMessage());
-        }
-
-        return null;
-    }
-
-    @Override
-    public ApiResponse getUserById(String userId) {
-
-        ApiResponse response = new ApiResponse();
-        try {
-            User user = userRepository.findById(Long.valueOf(userId)).orElseThrow(()-> new  NotFoundException(
-                    "User not found"
-            ));
-            UserRequest userRequest = Utils.mapUserEntityToUserRequest(user);
-            response.setResponseCode("200");
-            response.setResponseMessage("successful");
-            response.setUser(userRequest);
-
-
-        }  catch (Exception e) {
-            response.setResponseCode("404");
-            response.setResponseMessage("Error getting a user: " + e.getMessage());
-        }
-
-        return response;
-    }
-
-    @Override
-    public ApiResponse getUserInfo(String email) {
-
-        ApiResponse response = new ApiResponse();
-        try {
-            User user = userRepository.findByEmail(email).orElseThrow(()-> new  NotFoundException(
-                    "User not found"
-            ));
-            UserRequest userRequest = Utils.mapUserEntityToUserRequest(user);
-            response.setResponseCode("200");
-            response.setResponseMessage("successful");
-            response.setUser(userRequest);
-
-
-        }  catch (Exception e) {
-            response.setResponseCode("404");
-            response.setResponseMessage("Error retrieving user's information: " + e.getMessage());
-        }
-        return null;
     }
 }
