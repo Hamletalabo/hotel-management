@@ -17,7 +17,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
-import java.io.IOException;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -48,7 +47,7 @@ public class RoomServiceImpl implements RoomService {
         Room savedRoom = roomRepository.save(room);
 
         return ApiResponse.builder()
-                .responseCode("200")
+                .responseCode(200)
                 .responseMessage("Room added successfully")
                 .room(Utils.mapRoomEntityToRoomRequest(savedRoom))
                 .build();
@@ -65,7 +64,7 @@ public class RoomServiceImpl implements RoomService {
         List<RoomRequest> roomRequests = Utils.mapRoomListEntityToRoomListRequest(rooms);
 
         return ApiResponse.builder()
-                .responseCode("200")
+                .responseCode(200)
                 .responseMessage("Rooms retrieved successfully")
                 .roomList(roomRequests)
                 .build();
@@ -85,7 +84,7 @@ public class RoomServiceImpl implements RoomService {
         roomRepository.delete(room);
 
         return ApiResponse.builder()
-                .responseCode("200")
+                .responseCode(200)
                 .responseMessage("Room deleted successfully")
                 .build();
     }
@@ -114,7 +113,7 @@ public class RoomServiceImpl implements RoomService {
         Room updatedRoom = roomRepository.save(existingRoom);
 
         return ApiResponse.builder()
-                .responseCode("200")
+                .responseCode(200)
                 .responseMessage("Room updated successfully")
                 .room(Utils.mapRoomEntityToRoomRequest(updatedRoom))
                 .build();
@@ -126,17 +125,17 @@ public class RoomServiceImpl implements RoomService {
                 .orElseThrow(() -> new NotFoundException("Room not found with ID: " + roomId));
 
         return ApiResponse.builder()
-                .responseCode("200")
+                .responseCode(200)
                 .room( Utils.mapRoomEntityToRoomRequestPlusBookings(room))
                 .build();
     }
 
     @Override
-    public ApiResponse getAvailableRoomByDateAndType(java.time.LocalDate checkInDate, LocalDate checkOutDate, String roomType) {
+    public ApiResponse getAvailableRoomByDateAndType(LocalDate checkInDate, LocalDate checkOutDate, String roomType) {
         List<Room> availableRooms = roomRepository.findAvailableRoomsByDatesAndTypes(checkInDate, checkOutDate, roomType);
 
         return ApiResponse.builder()
-                .responseCode("200")
+                .responseCode(200)
                 .responseMessage("All available rooms")
                 .roomList(Utils.mapRoomListEntityToRoomListRequest(availableRooms))
                 .build();
@@ -147,7 +146,7 @@ public class RoomServiceImpl implements RoomService {
         List<Room> availableRooms = roomRepository.getAllAvailableRooms();
 
         return ApiResponse.builder()
-                .responseCode("200")
+                .responseCode(200)
                 .responseMessage("All available rooms")
                 .roomList(Utils.mapRoomListEntityToRoomListRequest(availableRooms))
                 .build();

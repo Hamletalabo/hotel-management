@@ -37,14 +37,8 @@ public class SecurityConfig {
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
                 .authorizeHttpRequests(requests -> requests
-                        .requestMatchers(HttpMethod.POST, "/api/v1/auth/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/v1/auth/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/v1/posts/**").permitAll()
+                        .requestMatchers("/api/auth/**", "/api/rooms/**", "/api/bookings/**").permitAll()
                         .requestMatchers("/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**", "/swagger-resources/**").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/v1/posts/**").hasAuthority("USER")
-                        .requestMatchers(HttpMethod.PUT, "/api/v1/posts/**").hasAuthority("USER")
-                        .requestMatchers(HttpMethod.DELETE, "/api/v1/posts/**").hasAuthority("USER")
-                        .requestMatchers("/api/v1/user/**").hasAuthority("USER")
                         .anyRequest().authenticated()
                 );
 

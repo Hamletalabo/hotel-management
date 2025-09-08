@@ -68,7 +68,7 @@ public class BookingServiceImpl implements BookingService {
         bookingRepository.save(booking);
 
         return ApiResponse.builder()
-                .responseCode("200")
+                .responseCode(200)
                 .responseMessage("Booking successful. Confirmation code: " + bookingRequest.getBookingConfirmationCode())
                 .build();
     }
@@ -90,7 +90,7 @@ public class BookingServiceImpl implements BookingService {
                 .orElseThrow(() -> new NotFoundException("Booking not found with confirmation code: " + confirmationCode));
 
         return ApiResponse.builder()
-                .responseCode("200")
+                .responseCode(200)
                 .responseMessage("Booking retrieved successfully")
                 .booking(Utils.mapBookingsEntityBookingRequest(booking))
                 .build();
@@ -102,13 +102,13 @@ public class BookingServiceImpl implements BookingService {
 
         if (bookings.isEmpty()) {
             return ApiResponse.builder()
-                    .responseCode("204")
+                    .responseCode(200)
                     .responseMessage("No bookings found")
                     .build();
         }
 
         return ApiResponse.builder()
-                .responseCode("200")
+                .responseCode(200)
                 .responseMessage("Bookings retrieved successfully")
                 .bookingList(Utils.mapBookingListEntityToBookingListRequest(bookings))
                 .build();
@@ -122,7 +122,7 @@ public class BookingServiceImpl implements BookingService {
         bookingRepository.delete(booking);
 
         return ApiResponse.builder()
-                .responseCode("200")
+                .responseCode(200)
                 .responseMessage("Booking cancelled successfully")
                 .build();
     }

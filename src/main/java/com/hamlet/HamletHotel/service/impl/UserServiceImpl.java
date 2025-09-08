@@ -51,7 +51,7 @@ public class UserServiceImpl implements UserService {
         return UserRegisterResponse.builder()
                 .user(Utils.mapUserEntityToUserRequest(savedUser))
                 .response(ApiResponse.builder()
-                        .responseCode("200")
+                        .responseCode(200)
                         .responseMessage("User registered successfully")
                         .build())
                 .build();
@@ -86,7 +86,7 @@ public class UserServiceImpl implements UserService {
         List<UserRequest> userRequests = Utils.mapUserListEntityToUserListRequest(userList);
 
         return ApiResponse.builder()
-                .responseCode("200")
+                .responseCode(200)
                 .responseMessage("Successfully retrieved users")
                 .userLists(userRequests)
                 .build();
@@ -100,7 +100,7 @@ public class UserServiceImpl implements UserService {
         UserRequest userRequest = Utils.mapUserEntityToUserRequestPlusUserBookingsAndRoom(user);
 
         return ApiResponse.builder()
-                .responseCode("200")
+                .responseCode(200)
                 .responseMessage("Successfully retrieved user booking history")
                 .user(userRequest)
                 .build();
@@ -114,7 +114,7 @@ public class UserServiceImpl implements UserService {
         userRepository.delete(user);
 
         return ApiResponse.builder()
-                .responseCode("200")
+                .responseCode(200)
                 .responseMessage("User deleted successfully")
                 .build();
     }
@@ -125,7 +125,7 @@ public class UserServiceImpl implements UserService {
                 .orElseThrow(() -> new NotFoundException("User not found"));
 
         return ApiResponse.builder()
-                .responseCode("200")
+                .responseCode(200)
                 .responseMessage("Successfully retrieved user")
                 .user(Utils.mapUserEntityToUserRequest(user))
                 .build();
@@ -137,7 +137,7 @@ public class UserServiceImpl implements UserService {
                 .orElseThrow(() -> new NotFoundException("User not found"));
 
         return ApiResponse.builder()
-                .responseCode("200")
+                .responseCode(200)
                 .responseMessage("Successfully retrieved user information")
                 .user(Utils.mapUserEntityToUserRequest(user))
                 .build();

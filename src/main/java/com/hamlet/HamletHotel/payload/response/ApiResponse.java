@@ -16,7 +16,7 @@ import java.util.List;
 @Builder
 public class ApiResponse {
 
-    private String responseCode;
+    private int responseCode;
 
     private String responseMessage;
 
