@@ -1,6 +1,6 @@
 package com.hamlet.HamletHotel.controller;
 
-import com.hamlet.HamletHotel.payload.response.ApiResponse;
+import com.hamlet.HamletHotel.payload.response.Response;
 import com.hamlet.HamletHotel.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -18,34 +18,34 @@ public class UserController {
 
     @GetMapping("/all")
     @PreAuthorize("hasAuthority('ADMIN')")
-    public ResponseEntity<ApiResponse> getAllUsers(){
-        ApiResponse response = userService.getAllUsers();
+    public ResponseEntity<Response> getAllUsers(){
+        Response response = userService.getAllUsers();
         return ResponseEntity.ok(response);
     }
 
     @GetMapping("/get-by-id/{userId}")
-    public ResponseEntity<ApiResponse> getUserById(@PathVariable("userId") String userId){
-        ApiResponse response = userService.getUserById(userId);
+    public ResponseEntity<Response> getUserById(@PathVariable("userId") String userId){
+        Response response = userService.getUserById(userId);
         return ResponseEntity.ok(response);
     }
 
     @DeleteMapping("/delete/{userId}")
-    public ResponseEntity<ApiResponse> deleteUser(@PathVariable("userId") String userId){
-        ApiResponse response = userService.deleteUser(userId);
+    public ResponseEntity<Response> deleteUser(@PathVariable("userId") String userId){
+        Response response = userService.deleteUser(userId);
         return ResponseEntity.ok(response);
     }
 
     @GetMapping("/profile-info")
-    public ResponseEntity<ApiResponse> userProfile(){
+    public ResponseEntity<Response> userProfile(){
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String email = authentication.getName();
-        ApiResponse response = userService.getUserInfo(email);
+        Response response = userService.getUserInfo(email);
         return ResponseEntity.ok(response);
     }
 
     @GetMapping("/get-user-bookings/{userId}")
-    public ResponseEntity<ApiResponse> userBookingHistory(@PathVariable("userId") String userId){
-        ApiResponse response = userService.getUserBookingsHistory(userId);
+    public ResponseEntity<Response> userBookingHistory(@PathVariable("userId") String userId){
+        Response response = userService.getUserBookingsHistory(userId);
         return ResponseEntity.ok(response);
     }
 }

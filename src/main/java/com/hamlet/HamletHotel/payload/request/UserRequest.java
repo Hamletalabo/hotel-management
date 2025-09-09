@@ -13,12 +13,12 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-@JsonInclude(JsonInclude.Include.NON_NULL)
 public class UserRequest {
 
     private Long id;
     private String email;
     private String name;
+    private String password;
     private String phoneNumber;
     private Roles role;
     private List<BookingRequest> bookings;

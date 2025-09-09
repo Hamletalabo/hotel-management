@@ -9,7 +9,7 @@ import com.hamlet.HamletHotel.exception.AlreadyExistsException;
 import com.hamlet.HamletHotel.exception.NotFoundException;
 import com.hamlet.HamletHotel.payload.request.LoginRequest;
 import com.hamlet.HamletHotel.payload.request.UserRequest;
-import com.hamlet.HamletHotel.payload.response.ApiResponse;
+import com.hamlet.HamletHotel.payload.response.Response;
 import com.hamlet.HamletHotel.payload.response.LoginResponse;
 import com.hamlet.HamletHotel.payload.response.UserRegisterResponse;
 import com.hamlet.HamletHotel.repository.JwtTokenRepository;
@@ -34,58 +34,53 @@ public class UserServiceImpl implements UserService {
     private final AuthenticationManager authenticationManager;
     private final JwtTokenRepository jwtTokenRepository;
 
-    @Override
-    public UserRegisterResponse register(User user) {
-        if (user.getRoles() == null) {
-            user.setRoles(Roles.USER);
-        }
-
-        if (userRepository.existsByEmail(user.getEmail())) {
-            throw new AlreadyExistsException(user.getEmail() + " already exists");
-        }
-
-        user.setPassword(passwordEncoder.encode(user.getPassword()));
-
-        User savedUser = userRepository.save(user);
-
-        return UserRegisterResponse.builder()
-                .user(Utils.mapUserEntityToUserRequest(savedUser))
-                .response(ApiResponse.builder()
-                        .responseCode(200)
-                        .responseMessage("User registered successfully")
-                        .build())
-                .build();
-    }
-
-    @Override
-    public LoginResponse login(LoginRequest loginRequest) {
-        authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(
-                        loginRequest.getEmail(),
-                        loginRequest.getPassword()
-                )
-        );
-
-        User user = userRepository.findByEmail(loginRequest.getEmail())
-                .orElseThrow(() -> new NotFoundException("User not found"));
-
-        String jwtToken = jwtService.generateToken(user);
-        revokeAllUserTokens(user);
-        saveUserToken(user, jwtToken);
-
-        return LoginResponse.builder()
-                .responseCode("200")
-                .responseMessage("You have been logged in successfully")
-                .token(jwtToken)
-                .build();
-    }
+//    @Override
+//    public UserRegisterResponse register(User user) {
+//        if (user.getRoles() == null) {
+//            user.setRoles(Roles.USER);
+//        }
+//        if (userRepository.existsByEmail(user.getEmail())) { throw new AlreadyExistsException(user.getEmail()
+//                + " already exists");
+//        }
+//        user.setPassword(passwordEncoder.encode(user.getPassword()));
+//        User savedUser = userRepository.save(user);
+//        return UserRegisterResponse.builder()
+//                .user(Utils.mapUserEntityToUserRequest(savedUser))
+//                .response(Response.builder()
+//                        .responseCode(200)
+//                        .responseMessage("User registered successfully")
+//                        .build())
+//                .build(); }
+//
+//    @Override
+//    public LoginResponse login(LoginRequest loginRequest) {
+//        authenticationManager.authenticate(
+//                new UsernamePasswordAuthenticationToken(
+//                        loginRequest.getEmail(),
+//                        loginRequest.getPassword()
+//                )
+//        );
+//
+//        User user = userRepository.findByEmail(loginRequest.getEmail())
+//                .orElseThrow(() -> new NotFoundException("User not found"));
+//
+//        String jwtToken = jwtService.generateToken(user);
+//        revokeAllUserTokens(user);
+//        saveUserToken(user, jwtToken);
+//
+//        return LoginResponse.builder()
+//                .responseCode("200")
+//                .responseMessage("You have been logged in successfully")
+//                .token(jwtToken)
+//                .build();
+//    }
 
     @Override
-    public ApiResponse getAllUsers() {
+    public Response getAllUsers() {
         List<User> userList = userRepository.findAll();
         List<UserRequest> userRequests = Utils.mapUserListEntityToUserListRequest(userList);
 
-        return ApiResponse.builder()
+        return Response.builder()
                 .responseCode(200)
                 .responseMessage("Successfully retrieved users")
                 .userLists(userRequests)
@@ -93,13 +88,13 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public ApiResponse getUserBookingsHistory(String userId) {
+    public Response getUserBookingsHistory(String userId) {
         User user = userRepository.findById(Long.valueOf(userId))
                 .orElseThrow(() -> new NotFoundException("User not found"));
 
         UserRequest userRequest = Utils.mapUserEntityToUserRequestPlusUserBookingsAndRoom(user);
 
-        return ApiResponse.builder()
+        return Response.builder()
                 .responseCode(200)
                 .responseMessage("Successfully retrieved user booking history")
                 .user(userRequest)
@@ -107,24 +102,24 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public ApiResponse deleteUser(String userId) {
+    public Response deleteUser(String userId) {
         User user = userRepository.findById(Long.valueOf(userId))
                 .orElseThrow(() -> new NotFoundException("User not found"));
 
         userRepository.delete(user);
 
-        return ApiResponse.builder()
+        return Response.builder()
                 .responseCode(200)
                 .responseMessage("User deleted successfully")
                 .build();
     }
 
     @Override
-    public ApiResponse getUserById(String userId) {
+    public Response getUserById(String userId) {
         User user = userRepository.findById(Long.valueOf(userId))
                 .orElseThrow(() -> new NotFoundException("User not found"));
 
-        return ApiResponse.builder()
+        return Response.builder()
                 .responseCode(200)
                 .responseMessage("Successfully retrieved user")
                 .user(Utils.mapUserEntityToUserRequest(user))
@@ -132,37 +127,37 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public ApiResponse getUserInfo(String email) {
+    public Response getUserInfo(String email) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new NotFoundException("User not found"));
 
-        return ApiResponse.builder()
+        return Response.builder()
                 .responseCode(200)
                 .responseMessage("Successfully retrieved user information")
                 .user(Utils.mapUserEntityToUserRequest(user))
                 .build();
     }
 
-    private void saveUserToken(User user, String jwtToken) {
-        JwtToken token = JwtToken.builder()
-                .user(user)
-                .token(jwtToken)
-                .tokenType(TokenType.BEARER)
-                .expired(false)
-                .revoked(false)
-                .build();
-        jwtTokenRepository.save(token);
-    }
-
-    private void revokeAllUserTokens(User user) {
-        var validUserTokens = jwtTokenRepository.findAllValidTokenByUser(user.getId());
-        if (validUserTokens.isEmpty()) return;
-
-        validUserTokens.forEach(token -> {
-            token.setExpired(true);
-            token.setRevoked(true);
-        });
-
-        jwtTokenRepository.saveAll(validUserTokens);
-    }
+//    private void saveUserToken(User user, String jwtToken) {
+//        JwtToken token = JwtToken.builder()
+//                .user(user)
+//                .token(jwtToken)
+//                .tokenType(TokenType.BEARER)
+//                .expired(false)
+//                .revoked(false)
+//                .build();
+//        jwtTokenRepository.save(token);
+//    }
+//
+//    private void revokeAllUserTokens(User user) {
+//        var validUserTokens = jwtTokenRepository.findAllValidTokenByUser(user.getId());
+//        if (validUserTokens.isEmpty()) return;
+//
+//        validUserTokens.forEach(token -> {
+//            token.setExpired(true);
+//            token.setRevoked(true);
+//        });
+//
+//        jwtTokenRepository.saveAll(validUserTokens);
+//    }
 }

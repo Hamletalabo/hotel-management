@@ -1,13 +1,11 @@
 package com.hamlet.HamletHotel.payload.response;
 
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.hamlet.HamletHotel.entity.User;
-import com.hamlet.HamletHotel.payload.request.UserRequest;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.web.multipart.MultipartFile;
 
 @Data
 @Builder
@@ -17,7 +15,11 @@ public class UserRegisterResponse {
 
     private String email;
 
-    private UserRequest user;
+    private String phoneNumber;
+
+    private String name;
+
+    private MultipartFile photo;
 
     private ApiResponse response;
 

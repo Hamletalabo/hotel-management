@@ -5,7 +5,7 @@ import com.hamlet.HamletHotel.entity.Room;
 import com.hamlet.HamletHotel.entity.User;
 import com.hamlet.HamletHotel.exception.BadRequestException;
 import com.hamlet.HamletHotel.exception.NotFoundException;
-import com.hamlet.HamletHotel.payload.response.ApiResponse;
+import com.hamlet.HamletHotel.payload.response.Response;
 import com.hamlet.HamletHotel.repository.BookingRepository;
 import com.hamlet.HamletHotel.repository.RoomRepository;
 import com.hamlet.HamletHotel.repository.UserRepository;
@@ -31,7 +31,7 @@ public class BookingServiceImpl implements BookingService {
 
     @Transactional
     @Override
-    public ApiResponse saveBooking(Long roomId, Long userId, Booking bookingRequest) {
+    public Response saveBooking(Long roomId, Long userId, Booking bookingRequest) {
 
         // 1. Fetch user
         User user = userRepository.findById(userId)
@@ -67,7 +67,7 @@ public class BookingServiceImpl implements BookingService {
 
         bookingRepository.save(booking);
 
-        return ApiResponse.builder()
+        return Response.builder()
                 .responseCode(200)
                 .responseMessage("Booking successful. Confirmation code: " + bookingRequest.getBookingConfirmationCode())
                 .build();
@@ -85,11 +85,11 @@ public class BookingServiceImpl implements BookingService {
 
 
     @Override
-    public ApiResponse findBookingByConfirmationCode(String confirmationCode) {
+    public Response findBookingByConfirmationCode(String confirmationCode) {
         Booking booking = bookingRepository.findByBookingConfirmationCode(confirmationCode)
                 .orElseThrow(() -> new NotFoundException("Booking not found with confirmation code: " + confirmationCode));
 
-        return ApiResponse.builder()
+        return Response.builder()
                 .responseCode(200)
                 .responseMessage("Booking retrieved successfully")
                 .booking(Utils.mapBookingsEntityBookingRequest(booking))
@@ -97,17 +97,17 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
-    public ApiResponse getAllBooking() {
+    public Response getAllBooking() {
         List<Booking> bookings = bookingRepository.findAll();
 
         if (bookings.isEmpty()) {
-            return ApiResponse.builder()
+            return Response.builder()
                     .responseCode(200)
                     .responseMessage("No bookings found")
                     .build();
         }
 
-        return ApiResponse.builder()
+        return Response.builder()
                 .responseCode(200)
                 .responseMessage("Bookings retrieved successfully")
                 .bookingList(Utils.mapBookingListEntityToBookingListRequest(bookings))
@@ -115,13 +115,13 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
-    public ApiResponse cancelBookings(Long bookingId) {
+    public Response cancelBookings(Long bookingId) {
         Booking booking = bookingRepository.findById(bookingId)
                 .orElseThrow(() -> new NotFoundException("Booking not found"));
 
         bookingRepository.delete(booking);
 
-        return ApiResponse.builder()
+        return Response.builder()
                 .responseCode(200)
                 .responseMessage("Booking cancelled successfully")
                 .build();

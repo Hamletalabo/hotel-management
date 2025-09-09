@@ -28,13 +28,11 @@ public class Utils {
 
     public static UserRequest mapUserEntityToUserRequest(User user){
         UserRequest userRequest = new UserRequest();
-
         userRequest.setId(user.getId());
         userRequest.setName(user.getName());
         userRequest.setEmail(user.getEmail());
         userRequest.setPhoneNumber(user.getPhoneNumber());
         userRequest.setRole(user.getRoles());
-
         return userRequest;
     }
 

@@ -5,7 +5,7 @@ import com.hamlet.HamletHotel.exception.NotFoundException;
 import com.hamlet.HamletHotel.exception.UnableToUploadImageException;
 import com.hamlet.HamletHotel.exception.UnauthenticatedException;
 import com.hamlet.HamletHotel.payload.request.RoomRequest;
-import com.hamlet.HamletHotel.payload.response.ApiResponse;
+import com.hamlet.HamletHotel.payload.response.Response;
 import com.hamlet.HamletHotel.repository.BookingRepository;
 import com.hamlet.HamletHotel.repository.RoomRepository;
 import com.hamlet.HamletHotel.service.AwsS3Service;
@@ -30,7 +30,7 @@ public class RoomServiceImpl implements RoomService {
 
 
     @Override
-    public ApiResponse addNewRoom(RoomRequest roomRequest) {
+    public Response addNewRoom(RoomRequest roomRequest) {
 
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || !authentication.isAuthenticated()) {
@@ -46,7 +46,7 @@ public class RoomServiceImpl implements RoomService {
 
         Room savedRoom = roomRepository.save(room);
 
-        return ApiResponse.builder()
+        return Response.builder()
                 .responseCode(200)
                 .responseMessage("Room added successfully")
                 .room(Utils.mapRoomEntityToRoomRequest(savedRoom))
@@ -59,11 +59,11 @@ public class RoomServiceImpl implements RoomService {
     }
 
     @Override
-    public ApiResponse getAllRoom() {
+    public Response getAllRoom() {
         List<Room> rooms = roomRepository.findAll(Sort.by(Sort.Direction.DESC, "id"));
         List<RoomRequest> roomRequests = Utils.mapRoomListEntityToRoomListRequest(rooms);
 
-        return ApiResponse.builder()
+        return Response.builder()
                 .responseCode(200)
                 .responseMessage("Rooms retrieved successfully")
                 .roomList(roomRequests)
@@ -72,7 +72,7 @@ public class RoomServiceImpl implements RoomService {
 
 
     @Override
-    public ApiResponse deleteRoom(Long roomId) {
+    public Response deleteRoom(Long roomId) {
 
         Room room = roomRepository.findById(roomId)
                 .orElseThrow(() -> new NotFoundException("Room not found with ID: " + roomId));
@@ -83,14 +83,14 @@ public class RoomServiceImpl implements RoomService {
 
         roomRepository.delete(room);
 
-        return ApiResponse.builder()
+        return Response.builder()
                 .responseCode(200)
                 .responseMessage("Room deleted successfully")
                 .build();
     }
 
     @Override
-    public ApiResponse updateRoom(Long roomId, RoomRequest roomRequest) {
+    public Response updateRoom(Long roomId, RoomRequest roomRequest) {
         Room existingRoom = roomRepository.findById(roomId)
                 .orElseThrow(() -> new NotFoundException("Room not found"));
 
@@ -112,7 +112,7 @@ public class RoomServiceImpl implements RoomService {
 
         Room updatedRoom = roomRepository.save(existingRoom);
 
-        return ApiResponse.builder()
+        return Response.builder()
                 .responseCode(200)
                 .responseMessage("Room updated successfully")
                 .room(Utils.mapRoomEntityToRoomRequest(updatedRoom))
@@ -120,21 +120,21 @@ public class RoomServiceImpl implements RoomService {
     }
 
     @Override
-    public ApiResponse getRoomById(Long roomId) {
+    public Response getRoomById(Long roomId) {
         Room room = roomRepository.findById(roomId)
                 .orElseThrow(() -> new NotFoundException("Room not found with ID: " + roomId));
 
-        return ApiResponse.builder()
+        return Response.builder()
                 .responseCode(200)
                 .room( Utils.mapRoomEntityToRoomRequestPlusBookings(room))
                 .build();
     }
 
     @Override
-    public ApiResponse getAvailableRoomByDateAndType(LocalDate checkInDate, LocalDate checkOutDate, String roomType) {
+    public Response getAvailableRoomByDateAndType(LocalDate checkInDate, LocalDate checkOutDate, String roomType) {
         List<Room> availableRooms = roomRepository.findAvailableRoomsByDatesAndTypes(checkInDate, checkOutDate, roomType);
 
-        return ApiResponse.builder()
+        return Response.builder()
                 .responseCode(200)
                 .responseMessage("All available rooms")
                 .roomList(Utils.mapRoomListEntityToRoomListRequest(availableRooms))
@@ -142,10 +142,10 @@ public class RoomServiceImpl implements RoomService {
     }
 
     @Override
-    public ApiResponse getAllAvailableRooms() {
+    public Response getAllAvailableRooms() {
         List<Room> availableRooms = roomRepository.getAllAvailableRooms();
 
-        return ApiResponse.builder()
+        return Response.builder()
                 .responseCode(200)
                 .responseMessage("All available rooms")
                 .roomList(Utils.mapRoomListEntityToRoomListRequest(availableRooms))
