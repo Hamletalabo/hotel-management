@@ -5,7 +5,9 @@ import com.hamlet.HamletHotel.entity.Room;
 import com.hamlet.HamletHotel.entity.User;
 import com.hamlet.HamletHotel.exception.BadRequestException;
 import com.hamlet.HamletHotel.exception.NotFoundException;
-import com.hamlet.HamletHotel.payload.response.Response;
+import com.hamlet.HamletHotel.payload.request.CreateBookingRequest;
+import com.hamlet.HamletHotel.payload.request.UpdateBookingRequest;
+import com.hamlet.HamletHotel.payload.response.*;
 import com.hamlet.HamletHotel.repository.BookingRepository;
 import com.hamlet.HamletHotel.repository.RoomRepository;
 import com.hamlet.HamletHotel.repository.UserRepository;
@@ -13,6 +15,7 @@ import com.hamlet.HamletHotel.service.BookingService;
 import com.hamlet.HamletHotel.service.RoomService;
 import com.hamlet.HamletHotel.utils.Utils;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,56 +26,126 @@ import java.util.List;
 @RequiredArgsConstructor
 public class BookingServiceImpl implements BookingService {
 
+
     private final BookingRepository bookingRepository;
     private final RoomRepository roomRepository;
-    private final RoomService roomService;
     private final UserRepository userRepository;
-
 
     @Transactional
     @Override
-    public Response saveBooking(Long roomId, Long userId, Booking bookingRequest) {
-
-        // 1. Fetch user
-        User user = userRepository.findById(userId)
+    public BookingResponse saveBooking(CreateBookingRequest request) {
+        User user = userRepository.findById(request.getUserId())
                 .orElseThrow(() -> new NotFoundException("User not found"));
 
-        // 2. Validate dates
-        validateBookingDates(bookingRequest.getCheckInDate(), bookingRequest.getCheckOutDate());
+        validateBookingDates(request.getCheckInDate(), request.getCheckOutDate());
 
-        // 3. Fetch requested room
-        Room room = roomRepository.findById(roomId)
+        // 3. fetch room
+        Room room = roomRepository.findById(request.getRoomId())
                 .orElseThrow(() -> new NotFoundException("Room not found"));
 
-        // 4. Check availability for this room
+        // 4. check availability
         boolean isAvailable = roomRepository.findAvailableRoomsByDatesAndTypes(
-                bookingRequest.getCheckInDate(),
-                bookingRequest.getCheckOutDate(),
+                request.getCheckInDate(),
+                request.getCheckOutDate(),
                 room.getRoomType()
-        ).stream().anyMatch(r -> r.getId().equals(roomId));
+        ).stream().anyMatch(r -> r.getId().equals(room.getId()));
 
         if (!isAvailable) {
-            throw new NotFoundException("Selected room is not available for the given dates.");
+            throw new BadRequestException("Room is not available for the selected dates.");
         }
+
+        // 5. build booking
         Booking booking = Booking.builder()
-                .checkInDate(bookingRequest.getCheckInDate())
-                .checkOutDate(bookingRequest.getCheckOutDate())
-                .numberOfAdults(bookingRequest.getNumberOfAdults())
-                .numberOfChildren(bookingRequest.getNumberOfChildren())
-                .totalNumberOfGuest(bookingRequest.getTotalNumberOfGuest())
+                .checkInDate(request.getCheckInDate())
+                .checkOutDate(request.getCheckOutDate())
+                .numberOfAdults(request.getNumberOfAdults())
+                .numberOfChildren(request.getNumberOfChildren())
+                .totalNumberOfGuest(request.getNumberOfAdults() + request.getNumberOfChildren())
                 .bookingConfirmationCode(Utils.confirmationCode(6))
                 .user(user)
                 .room(room)
                 .build();
 
-        bookingRepository.save(booking);
+        Booking savedBooking = bookingRepository.save(booking);
 
-        return Response.builder()
-                .responseCode(200)
-                .responseMessage("Booking successful. Confirmation code: " + bookingRequest.getBookingConfirmationCode())
+        return BookingResponse.builder()
+                .responseCode(201)
+                .responseMessage("Booking created successfully")
+                .bookingInfo(mapToBookingInfo(savedBooking))
                 .build();
     }
 
+    @Override
+    public BookingResponse findBookingByConfirmationCode(String confirmationCode) {
+        Booking booking = bookingRepository.findByBookingConfirmationCode(confirmationCode)
+                .orElseThrow(() -> new NotFoundException("Booking not found with confirmation code: " + confirmationCode));
+
+        return BookingResponse.builder()
+                .responseCode(200)
+                .responseMessage("Booking retrieved successfully")
+                .bookingInfo(mapToBookingInfo(booking))
+                .build();
+    }
+
+    @Override
+    public BookingListResponse getAllBookings() {
+        List<Booking> bookings = bookingRepository.findAll(Sort.by(Sort.Direction.DESC, "id"));
+
+        if (bookings.isEmpty()) {
+            return BookingListResponse.builder()
+                    .responseCode(200)
+                    .responseMessage("No bookings found")
+                    .bookings(List.of())
+                    .build();
+        }
+        List<BookingInfo> bookingInfos = bookings.stream()
+                .map(this::mapToBookingInfo)
+                .toList();
+
+        return BookingListResponse.builder()
+                .responseCode(200)
+                .responseMessage("Bookings retrieved successfully")
+                .bookings(bookingInfos)
+                .build();
+    }
+
+    @Override
+    @Transactional
+    public ApiResponse cancelBooking(Long bookingId) {
+        Booking booking = bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new NotFoundException("Booking not found"));
+
+        bookingRepository.delete(booking);
+
+        return ApiResponse.builder()
+                .responseCode(200)
+                .responseMessage("Booking cancelled successfully")
+                .build();
+    }
+
+
+    @Override
+    @Transactional
+    public BookingResponse updateBooking(Long bookingId, UpdateBookingRequest request) {
+        Booking booking = bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new NotFoundException("Booking not found"));
+
+        validateBookingDates(request.getCheckInDate(), request.getCheckOutDate());
+
+        booking.setCheckInDate(request.getCheckInDate());
+        booking.setCheckOutDate(request.getCheckOutDate());
+        booking.setNumberOfAdults(request.getNumberOfAdults());
+        booking.setNumberOfChildren(request.getNumberOfChildren());
+        booking.setTotalNumberOfGuest(request.getNumberOfAdults() + request.getNumberOfChildren());
+
+        Booking updatedBooking = bookingRepository.save(booking);
+
+        return BookingResponse.builder()
+                .responseCode(200)
+                .responseMessage("Booking updated successfully")
+                .bookingInfo(mapToBookingInfo(updatedBooking))
+                .build();
+    }
     private void validateBookingDates(LocalDate checkIn, LocalDate checkOut) {
         LocalDate today = LocalDate.now();
         if (checkIn.isBefore(today)) {
@@ -83,47 +156,18 @@ public class BookingServiceImpl implements BookingService {
         }
     }
 
-
-    @Override
-    public Response findBookingByConfirmationCode(String confirmationCode) {
-        Booking booking = bookingRepository.findByBookingConfirmationCode(confirmationCode)
-                .orElseThrow(() -> new NotFoundException("Booking not found with confirmation code: " + confirmationCode));
-
-        return Response.builder()
-                .responseCode(200)
-                .responseMessage("Booking retrieved successfully")
-                .booking(Utils.mapBookingsEntityBookingRequest(booking))
-                .build();
-    }
-
-    @Override
-    public Response getAllBooking() {
-        List<Booking> bookings = bookingRepository.findAll();
-
-        if (bookings.isEmpty()) {
-            return Response.builder()
-                    .responseCode(200)
-                    .responseMessage("No bookings found")
-                    .build();
-        }
-
-        return Response.builder()
-                .responseCode(200)
-                .responseMessage("Bookings retrieved successfully")
-                .bookingList(Utils.mapBookingListEntityToBookingListRequest(bookings))
-                .build();
-    }
-
-    @Override
-    public Response cancelBookings(Long bookingId) {
-        Booking booking = bookingRepository.findById(bookingId)
-                .orElseThrow(() -> new NotFoundException("Booking not found"));
-
-        bookingRepository.delete(booking);
-
-        return Response.builder()
-                .responseCode(200)
-                .responseMessage("Booking cancelled successfully")
+    private BookingInfo mapToBookingInfo(Booking booking) {
+        return BookingInfo.builder()
+                .id(booking.getId())
+                .checkInDate(booking.getCheckInDate())
+                .checkOutDate(booking.getCheckOutDate())
+                .numberOfAdults(booking.getNumberOfAdults())
+                .numberOfChildren(booking.getNumberOfChildren())
+                .totalNumberOfGuest(booking.getTotalNumberOfGuest())
+                .bookingConfirmationCode(booking.getBookingConfirmationCode())
+                .userId(booking.getUser().getId())
+                .roomId(booking.getRoom().getId())
+                .roomType(booking.getRoom().getRoomType())
                 .build();
     }
 }

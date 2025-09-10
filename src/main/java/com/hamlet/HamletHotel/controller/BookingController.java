@@ -1,7 +1,10 @@
 package com.hamlet.HamletHotel.controller;
 
-import com.hamlet.HamletHotel.entity.Booking;
-import com.hamlet.HamletHotel.payload.response.Response;
+import com.hamlet.HamletHotel.payload.request.CreateBookingRequest;
+import com.hamlet.HamletHotel.payload.request.UpdateBookingRequest;
+import com.hamlet.HamletHotel.payload.response.ApiResponse;
+import com.hamlet.HamletHotel.payload.response.BookingListResponse;
+import com.hamlet.HamletHotel.payload.response.BookingResponse;
 import com.hamlet.HamletHotel.service.BookingService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -15,31 +18,38 @@ public class BookingController {
 
     private final BookingService bookingService;
 
-    @PostMapping("/booking-room/{roomId}/{userId}")
+    @PostMapping("/create")
     @PreAuthorize("hasAuthority('ADMIN') or hasAuthority('USER')")
-    public ResponseEntity<Response> saveBookings(@PathVariable Long roomId, @PathVariable Long userId,
-                                                 @RequestBody Booking bookingRequest){
-        Response response = bookingService.saveBooking( roomId, userId, bookingRequest);
+    public ResponseEntity<BookingResponse> createBooking(@RequestBody CreateBookingRequest request) {
+        BookingResponse response = bookingService.saveBooking(request);
         return ResponseEntity.status(response.getResponseCode()).body(response);
     }
 
-    @GetMapping("/all-bookings")
+    @PutMapping("/update/{bookingId}")
     @PreAuthorize("hasAuthority('ADMIN') or hasAuthority('USER')")
-    public ResponseEntity<Response> getAllBookings(){
-        Response response = bookingService.getAllBooking();
+    public ResponseEntity<BookingResponse> updateBooking(@PathVariable Long bookingId,
+                                                         @RequestBody UpdateBookingRequest request) {
+        BookingResponse response = bookingService.updateBooking(bookingId, request);
         return ResponseEntity.status(response.getResponseCode()).body(response);
     }
 
-    @GetMapping("/get-booking-by-confirmation-code/{confirmationCode}")
-    public ResponseEntity<Response> getBookingByConfirmationCode(@PathVariable String confirmationCode){
-        Response response = bookingService.findBookingByConfirmationCode(confirmationCode);
+    @GetMapping("/all")
+    @PreAuthorize("hasAuthority('ADMIN')")
+    public ResponseEntity<BookingListResponse> getAllBookings() {
+        BookingListResponse response = bookingService.getAllBookings();
         return ResponseEntity.status(response.getResponseCode()).body(response);
     }
 
-    @DeleteMapping("/cancel-bookings/{bookingId}")
+    @GetMapping("/by-confirmation/{confirmationCode}")
+    public ResponseEntity<BookingResponse> getBookingByConfirmationCode(@PathVariable String confirmationCode) {
+        BookingResponse response = bookingService.findBookingByConfirmationCode(confirmationCode);
+        return ResponseEntity.status(response.getResponseCode()).body(response);
+    }
+
+    @DeleteMapping("/cancel/{bookingId}")
     @PreAuthorize("hasAuthority('ADMIN') or hasAuthority('USER')")
-    public ResponseEntity<Response> cancelBooking(@PathVariable Long bookingId){
-        Response response = bookingService.cancelBookings(bookingId);
+    public ResponseEntity<ApiResponse> cancelBooking(@PathVariable Long bookingId) {
+        ApiResponse response = bookingService.cancelBooking(bookingId);
         return ResponseEntity.status(response.getResponseCode()).body(response);
     }
 }

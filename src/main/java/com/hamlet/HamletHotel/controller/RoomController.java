@@ -1,8 +1,7 @@
 package com.hamlet.HamletHotel.controller;
 
 import com.hamlet.HamletHotel.payload.request.RoomRequest;
-import com.hamlet.HamletHotel.payload.response.Response;
-import com.hamlet.HamletHotel.service.BookingService;
+import com.hamlet.HamletHotel.payload.response.*;
 import com.hamlet.HamletHotel.service.RoomService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -19,73 +18,79 @@ import java.util.List;
 public class RoomController {
 
     private final RoomService roomService;
-    private final BookingService bookingService;
 
-    @PostMapping("/add-room")
+    @PostMapping(value = "/add-room", consumes = {"multipart/form-data"})
     @PreAuthorize("hasAuthority('ADMIN')")
-    public ResponseEntity<Response> addNewRoom(RoomRequest roomRequest){
-        if (roomRequest.getRoomPhotoUrl() ==null || roomRequest.getRoomPhotoUrl().isEmpty() || roomRequest.getRoomType() == null ||
-                roomRequest.getRoomType().isEmpty() || roomRequest.getRoomPrice() == null || roomRequest.getRoomType().isBlank()){
-            Response response = new Response();
-            response.setResponseCode(400);
-            response.setResponseMessage("please provide values for all fields(photo, roomType, roomPrice");
-            return  ResponseEntity.status(response.getResponseCode()).body(response);
+    public ResponseEntity<RoomResponse> addNewRoom( RoomRequest roomRequest) {
+        if (roomRequest.getRoomPhoto() == null || roomRequest.getRoomPhoto().isEmpty() ||
+                roomRequest.getRoomType() == null || roomRequest.getRoomType().isBlank() ||
+                roomRequest.getRoomPrice() == null) {
+            return ResponseEntity.badRequest().body(
+                    RoomResponse.builder()
+                            .responseCode(400)
+                            .responseMessage("Please provide values for all fields (photo, roomType, roomPrice)")
+                            .build()
+            );
         }
-        Response response = roomService.addNewRoom(roomRequest);
-        return ResponseEntity.ok(response);
+        RoomResponse response = roomService.addNewRoom(roomRequest);
+        return ResponseEntity.status(response.getResponseCode()).body(response);
     }
 
     @GetMapping("/all")
-    public ResponseEntity<Response> getAllRooms(){
-        Response response = roomService.getAllRoom();
-        return ResponseEntity.ok(response);
+    public ResponseEntity<RoomListResponse> getAllRooms() {
+        RoomListResponse response = roomService.getAllRooms();
+        return ResponseEntity.status(response.getResponseCode()).body(response);
     }
 
     @GetMapping("/types")
-    public ResponseEntity<List<String>> getRoomTypes(){
+    public ResponseEntity<List<String>> getRoomTypes() {
         List<String> response = roomService.getAllRoomTypes();
         return ResponseEntity.ok(response);
     }
 
-
     @GetMapping("/room-by-id/{roomId}")
-    public ResponseEntity<Response> getRoomById(@PathVariable Long roomId){
-        Response response = roomService.getRoomById(roomId);
-        return ResponseEntity.ok(response);
+    public ResponseEntity<RoomResponse> getRoomById(@PathVariable Long roomId) {
+        RoomResponse response = roomService.getRoomById(roomId);
+        return ResponseEntity.status(response.getResponseCode()).body(response);
     }
 
     @GetMapping("/all-available-rooms")
-    public ResponseEntity<Response> getAvailableRooms(){
-        Response response = roomService.getAllAvailableRooms();
-        return ResponseEntity.ok(response);
+    public ResponseEntity<RoomListResponse> getAvailableRooms() {
+        RoomListResponse response = roomService.getAllAvailableRooms();
+        return ResponseEntity.status(response.getResponseCode()).body(response);
     }
 
     @GetMapping("/available-rooms-by-date-and-type")
-    public ResponseEntity<Response> getAvailableRoomsByDateAndType(
-            @RequestParam(required = false)@DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate checkInDate,
-            @RequestParam(required = false)@DateTimeFormat(iso = DateTimeFormat.ISO.DATE)LocalDate checkOutDate,
-            @RequestParam(required = false)String roomType){
-        if (checkInDate == null || roomType == null || roomType.isBlank() || checkOutDate == null){
-            Response response = new Response();
-            response.setResponseCode(400);
-            response.setResponseMessage("Please provide value for all fields (checkInDate, checkOutDate, roomType");
-            return ResponseEntity.status(response.getResponseCode()).body(response);
+    public ResponseEntity<RoomListResponse> getAvailableRoomsByDateAndType(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate checkInDate,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate checkOutDate,
+            @RequestParam String roomType) {
+
+        if (checkInDate == null || checkOutDate == null || roomType == null || roomType.isBlank()) {
+            return ResponseEntity.badRequest().body(
+                    RoomListResponse.builder()
+                            .responseCode(400)
+                            .responseMessage("Please provide values for all fields (checkInDate, checkOutDate, roomType)")
+                            .build()
+            );
         }
-        Response response = roomService.getAvailableRoomByDateAndType(checkInDate, checkOutDate, roomType);
-        return ResponseEntity.ok(response);
+
+        RoomListResponse response = roomService.getAvailableRoomByDateAndType(checkInDate, checkOutDate, roomType);
+        return ResponseEntity.status(response.getResponseCode()).body(response);
     }
 
-    @PutMapping("/update-room{roomId}")
-    @PreAuthorize("hasAuthority('ADMIN)")
-    public ResponseEntity<Response> updateRoom(Long roomId, RoomRequest roomRequest){
-        Response response = roomService.updateRoom(roomId, roomRequest);
+    @PutMapping("/update-room/{roomId}")
+    @PreAuthorize("hasAuthority('ADMIN')")
+    public ResponseEntity<RoomResponse> updateRoom(@PathVariable Long roomId,
+                                                   @RequestBody RoomRequest roomRequest) {
+        RoomResponse response = roomService.updateRoom(roomId, roomRequest);
         return ResponseEntity.status(response.getResponseCode()).body(response);
     }
 
     @DeleteMapping("/delete/{roomId}")
     @PreAuthorize("hasAuthority('ADMIN')")
-    public ResponseEntity<Response> deleteRoom(@PathVariable Long roomId){
-        Response response = roomService.deleteRoom(roomId);
+    public ResponseEntity<ApiResponse> deleteRoom(@PathVariable Long roomId) {
+        ApiResponse response = roomService.deleteRoom(roomId);
         return ResponseEntity.status(response.getResponseCode()).body(response);
     }
 }

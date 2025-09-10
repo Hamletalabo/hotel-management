@@ -6,6 +6,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -18,7 +19,6 @@ public class RoomRequest {
 
     private String roomType;
     private BigDecimal roomPrice;
-    private String roomPhotoUrl;
     private String roomDescription;
-    private List<BookingRequest> bookings;
+    private MultipartFile roomPhoto;
 }

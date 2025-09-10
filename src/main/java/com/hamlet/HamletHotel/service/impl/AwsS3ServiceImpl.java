@@ -31,8 +31,7 @@ public class AwsS3ServiceImpl implements AwsS3Service {
     @Value("${aws.s3.secret.key}")
     private String awsS3SecretKey;
 
-    // Optionally, make region configurable from application.properties
-    @Value("${aws.s3.region:eu-north-1}") // default if not set
+    @Value("${aws.s3.region:eu-north-1}")
     private String awsS3Region;
 
     @Override
@@ -72,19 +71,15 @@ public class AwsS3ServiceImpl implements AwsS3Service {
     @Override
     public void deleteFile(String fileUrl) {
         try {
-            // Extract the file name (key) from the full URL
             String fileKey = fileUrl.substring(fileUrl.lastIndexOf("/") + 1);
 
-            // Create AWS credentials
             BasicAWSCredentials awsCredentials = new BasicAWSCredentials(awsS3AccessKey, awsS3SecretKey);
 
-            // Build S3 client
             AmazonS3 s3Client = AmazonS3ClientBuilder.standard()
                     .withCredentials(new AWSStaticCredentialsProvider(awsCredentials))
                     .withRegion(Regions.fromName(awsS3Region))
                     .build();
 
-            // Delete the file
             s3Client.deleteObject(bucketName, fileKey);
 
         } catch (Exception e) {

@@ -1,11 +1,15 @@
 package com.hamlet.HamletHotel.service;
 
-import com.hamlet.HamletHotel.entity.Booking;
-import com.hamlet.HamletHotel.payload.response.Response;
+import com.hamlet.HamletHotel.payload.request.CreateBookingRequest;
+import com.hamlet.HamletHotel.payload.request.UpdateBookingRequest;
+import com.hamlet.HamletHotel.payload.response.ApiResponse;
+import com.hamlet.HamletHotel.payload.response.BookingListResponse;
+import com.hamlet.HamletHotel.payload.response.BookingResponse;
 
 public interface BookingService {
-    Response saveBooking(Long roomId, Long userId, Booking booking);
-    Response findBookingByConfirmationCode(String confirmationCode);
-    Response getAllBooking();
-    Response cancelBookings(Long bookingId);
+    BookingResponse saveBooking(CreateBookingRequest request);
+    BookingResponse findBookingByConfirmationCode(String confirmationCode);
+    BookingListResponse getAllBookings();
+    ApiResponse cancelBooking(Long bookingId);
+    BookingResponse updateBooking(Long bookingId, UpdateBookingRequest request);
 }

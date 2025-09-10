@@ -15,7 +15,6 @@ import com.hamlet.HamletHotel.payload.response.UserRegisterResponse;
 import com.hamlet.HamletHotel.repository.JwtTokenRepository;
 import com.hamlet.HamletHotel.repository.UserRepository;
 import com.hamlet.HamletHotel.service.AuthService;
-import com.hamlet.HamletHotel.utils.Utils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;

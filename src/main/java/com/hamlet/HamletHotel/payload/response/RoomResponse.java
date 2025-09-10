@@ -1,16 +1,19 @@
 package com.hamlet.HamletHotel.payload.response;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Data
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
 public class RoomResponse {
-    private Long id;
-    private String roomType;
-    private BigDecimal roomPrice;
-    private String roomPhotoUrl;
-    private String roomDescription;
-    private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
+    private int responseCode;
+    private String responseMessage;
+    private RoomInfo roomInfo;
 }
