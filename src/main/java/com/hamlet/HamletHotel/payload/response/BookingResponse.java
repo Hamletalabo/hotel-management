@@ -16,4 +16,5 @@ public class BookingResponse {
     private int responseCode;
     private String responseMessage;
     private BookingInfo bookingInfo;
+    private UserInfo user;
 }

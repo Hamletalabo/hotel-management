@@ -12,8 +12,8 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-import org.springframework.web.filter.CorsFilter;
 
 import java.util.Arrays;
 
@@ -28,17 +28,49 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+
         http
                 .csrf(CsrfConfigurer::disable)
+
+                .cors(cors -> {})
+
                 .exceptionHandling(exception -> exception
                         .authenticationEntryPoint(jwtAuthenticationEntryPoint)
                 )
+
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
+
                 .authorizeHttpRequests(requests -> requests
-                        .requestMatchers("/api/auth/**", "/api/rooms/**", "/api/bookings/**").permitAll()
-                        .requestMatchers("/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**", "/swagger-resources/**").permitAll()
+
+                        // AUTH
+                        .requestMatchers("/api/auth/**").permitAll()
+
+                        // PUBLIC ROOM ENDPOINTS
+                        .requestMatchers(
+                                HttpMethod.GET,
+                                "/api/rooms/all",
+                                "/api/rooms/types",
+                                "/api/rooms/room-by-id/**",
+                                "/api/rooms/all-available-rooms",
+                                "/api/rooms/available-rooms-by-date-and-type"
+                        ).permitAll()
+
+                        // AUTHENTICATED BOOKING LOOKUP
+                        .requestMatchers(
+                                HttpMethod.GET,
+                                "/api/bookings/by-confirmation/**"
+                        ).authenticated()
+
+                        // SWAGGER
+                        .requestMatchers(
+                                "/swagger-ui.html",
+                                "/swagger-ui/**",
+                                "/v3/api-docs/**",
+                                "/swagger-resources/**"
+                        ).permitAll()
+
                         .anyRequest().authenticated()
                 );
 
@@ -48,15 +80,38 @@ public class SecurityConfig {
 
         return http.build();
     }
+
     @Bean
-    public CorsFilter corsFilter() {
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+    public CorsConfigurationSource corsConfigurationSource() {
+
         CorsConfiguration config = new CorsConfiguration();
+
+        config.setAllowedOrigins(Arrays.asList(
+                "http://localhost:3000",
+                "http://localhost:5173"
+        ));
+
+        config.setAllowedMethods(Arrays.asList(
+                "GET",
+                "POST",
+                "PUT",
+                "DELETE",
+                "OPTIONS"
+        ));
+
+        config.setAllowedHeaders(Arrays.asList(
+                "Authorization",
+                "Content-Type",
+                "Accept"
+        ));
+
         config.setAllowCredentials(true);
-        config.setAllowedOrigins(Arrays.asList("http://localhost:5173"));
-        config.setAllowedHeaders(Arrays.asList("Origin", "Content-Type", "Accept", "Authorization"));
-        config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+
+        UrlBasedCorsConfigurationSource source =
+                new UrlBasedCorsConfigurationSource();
+
         source.registerCorsConfiguration("/**", config);
-        return new CorsFilter(source);
+
+        return source;
     }
 }

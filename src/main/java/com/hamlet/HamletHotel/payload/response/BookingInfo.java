@@ -2,6 +2,7 @@ package com.hamlet.HamletHotel.payload.response;
 
 import lombok.*;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 
 @Getter
@@ -20,4 +21,6 @@ public class BookingInfo {
     private Long userId;
     private Long roomId;
     private String roomType;
+    private String roomPhotoUrl;
+    private BigDecimal roomPrice;
 }

@@ -3,6 +3,7 @@ package com.hamlet.HamletHotel.service.impl;
 import com.hamlet.HamletHotel.entity.Booking;
 import com.hamlet.HamletHotel.entity.User;
 import com.hamlet.HamletHotel.exception.NotFoundException;
+import com.hamlet.HamletHotel.payload.request.EditUserRequest;
 import com.hamlet.HamletHotel.payload.request.UserRequest;
 import com.hamlet.HamletHotel.payload.response.*;
 import com.hamlet.HamletHotel.repository.UserRepository;
@@ -18,6 +19,23 @@ import java.util.stream.Collectors;
 public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
+
+    @Override
+    public EditUserResponse editUser(Long userId, EditUserRequest userRequest) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException("User not found"));
+
+        user.setName(userRequest.getName());
+        user.setPhoneNumber(userRequest.getPhoneNumber());
+
+        User updatedUser = userRepository.save(user);
+
+        return EditUserResponse.builder()
+                .responseCode(200)
+                .responseMessage("User updated successfully")
+                .userInfo(mapToUserInfo(updatedUser))
+                .build();
+    }
 
     @Override
     public UserListResponse getAllUsers() {

@@ -84,6 +84,11 @@ public class BookingServiceImpl implements BookingService {
                 .responseCode(200)
                 .responseMessage("Booking retrieved successfully")
                 .bookingInfo(mapToBookingInfo(booking))
+                .user(booking.getUser() != null ? UserInfo.builder()
+                        .name(booking.getUser().getName())
+                        .email(booking.getUser().getEmail())
+                        .phoneNumber(booking.getUser().getPhoneNumber())
+                        .build() : null)
                 .build();
     }
 
@@ -167,7 +172,9 @@ public class BookingServiceImpl implements BookingService {
                 .bookingConfirmationCode(booking.getBookingConfirmationCode())
                 .userId(booking.getUser().getId())
                 .roomId(booking.getRoom().getId())
+                .roomPrice(booking.getRoom().getRoomPrice())
                 .roomType(booking.getRoom().getRoomType())
+                .roomPhotoUrl(booking.getRoom().getRoomPhotoUrl())
                 .build();
     }
 }

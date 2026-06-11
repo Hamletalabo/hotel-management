@@ -1,5 +1,6 @@
 package com.hamlet.HamletHotel.entity;
 
+import com.hamlet.HamletHotel.entity.enums.RoomType;
 import jakarta.persistence.*;
 import lombok.*;
 

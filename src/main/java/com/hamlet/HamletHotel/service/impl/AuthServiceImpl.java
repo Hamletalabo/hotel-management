@@ -91,8 +91,8 @@ public class AuthServiceImpl implements AuthService {
         return LoginResponse.builder()
                 .apiResponse(ApiResponse.builder()
                         .responseCode(200)
-                        .responseMessage("Login successful")
                         .build())
+                .role(user.getRoles())
                 .token(jwtToken)
                 .build();
     }

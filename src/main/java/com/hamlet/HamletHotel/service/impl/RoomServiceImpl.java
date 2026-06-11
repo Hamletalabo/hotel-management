@@ -99,7 +99,6 @@ public class RoomServiceImpl implements RoomService {
         existingRoom.setRoomPrice(roomRequest.getRoomPrice());
         existingRoom.setRoomDescription(roomRequest.getRoomDescription());
 
-        // Replace photo if a new one is provided
         if (roomRequest.getRoomPhoto() != null) {
             if (existingRoom.getRoomPhotoUrl() != null) {
                 try {

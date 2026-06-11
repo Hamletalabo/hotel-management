@@ -1,5 +1,6 @@
 package com.hamlet.HamletHotel.controller;
 
+import com.hamlet.HamletHotel.payload.request.EditUserRequest;
 import com.hamlet.HamletHotel.payload.response.*;
 import com.hamlet.HamletHotel.service.UserService;
 import lombok.RequiredArgsConstructor;
@@ -15,6 +16,17 @@ import org.springframework.web.bind.annotation.*;
 public class UserController {
 
     private final UserService userService;
+
+    @PutMapping("/update/{userId}")
+    @PreAuthorize("hasAuthority('USER') or hasAuthority('ADMIN')")
+    public ResponseEntity<EditUserResponse> updateUser(
+            @PathVariable Long userId,
+            @RequestBody EditUserRequest request) {
+
+        EditUserResponse response = userService.editUser(userId, request);
+
+        return ResponseEntity.status(response.getResponseCode()).body(response);
+    }
 
     @GetMapping("/all")
     @PreAuthorize("hasAuthority('ADMIN')")

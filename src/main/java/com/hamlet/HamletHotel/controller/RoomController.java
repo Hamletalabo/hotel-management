@@ -79,12 +79,18 @@ public class RoomController {
         return ResponseEntity.status(response.getResponseCode()).body(response);
     }
 
-    @PutMapping("/update-room/{roomId}")
+    @PutMapping(value = "/update-room/{roomId}", consumes = {"multipart/form-data"})
     @PreAuthorize("hasAuthority('ADMIN')")
-    public ResponseEntity<RoomResponse> updateRoom(@PathVariable Long roomId,
-                                                   @RequestBody RoomRequest roomRequest) {
-        RoomResponse response = roomService.updateRoom(roomId, roomRequest);
-        return ResponseEntity.status(response.getResponseCode()).body(response);
+    public ResponseEntity<RoomResponse> updateRoom(
+            @PathVariable Long roomId,
+            RoomRequest roomRequest) {
+
+        RoomResponse response =
+                roomService.updateRoom(roomId, roomRequest);
+
+        return ResponseEntity
+                .status(response.getResponseCode())
+                .body(response);
     }
 
     @DeleteMapping("/delete/{roomId}")
